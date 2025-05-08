@@ -1,3 +1,5 @@
+
+
 # Sentinel: The Disciplined AI Development System
 
 **Sentinel** is a ruleset and execution system that transforms AI coding tools into disciplined, test-driven collaborators. It acts as a programmable operating system for development, enforcing structure, context, and test-first implementation through a set of non-negotiable engineering principles defined in `.cursorrules`.
@@ -22,6 +24,8 @@ Modern AI tools are powerful code generators, but often lack context, violate ar
 -   **Automated Quality Gates**: Enforces checks like passing tests, linting, code review, and tech debt analysis before task completion.
 
 ---
+
+[![Watch the video](https://img.youtube.com/vi/Pu5OOsZK-D0/0.jpg)](https://www.youtube.com/watch?v=Pu5OOsZK-D0)
 
 ## Setup
 
