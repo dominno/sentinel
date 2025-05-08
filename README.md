@@ -44,7 +44,20 @@ Modern AI tools are powerful code generators, but often lack context, violate ar
       tasks/tasks.md
     ```
 4.  **Define Test + Lint Commands**: Add your project's specific test and lint commands to `docs/unit_testing_guideline.md`. Sentinel will not run without these commands defined.
-5.  **Populate Initial Docs**: Fill in `docs/PRD.md`, `docs/technical.md`, `docs/architecture.mermaid`, and `docs/unit_testing_guideline.md` with your project's specifics.
+5.  **Install and Configure MCP Time Server**: Sentinel uses a Model Context Protocol (MCP) time server for consistent timestamps in logs.
+    *   Install the server: Follow instructions at [https://github.com/modelcontextprotocol/servers/tree/main/src/time](https://github.com/modelcontextprotocol/servers/tree/main/src/time)
+    *   Configure your AI tool (Cursor, Winsurf, etc.) to use it. For Cursor, you would update `~/.cursor/mcp.json` like this:
+        ```json
+        {
+          "mcpServers": {
+            "time": {
+              "command": "uvx",
+              "args": ["mcp-server-time", "--local-timezone=Europe/Warsaw"]
+            }
+          }
+        }
+        ```
+6.  **Populate Initial Docs**: Fill in `docs/PRD.md`, `docs/technical.md`, `docs/architecture.mermaid`, and `docs/unit_testing_guideline.md` with your project's specifics.
 
 ---
 
@@ -151,6 +164,56 @@ Sentinel will:
 5.  **Git Flow**: Feature branch is merged into `develop`.
 6.  **Logs/Status Updated**: `status.md`, `log.md`, and `tasks/tasks.md` reflect completion with canonical timestamps.
 7.  **Branch Discipline Verified**: Task was started and completed on its dedicated feature branch.
+
+---
+
+## Creating Tasks from Documentation
+
+Sentinel can help you break down high-level ideas from your `docs/PRD.md`, `docs/technical.md`, and `docs/architecture.mermaid` into actionable tasks in `tasks/tasks.md`. This is typically a two-stage process involving `ARCHITECTURE_MODE` (for larger features) and `PLANNER_MODE`.
+
+**1. High-Level Design with `ARCHITECTURE_MODE` (Optional, for complex features)**
+
+If you're introducing a significant new feature or module that might impact your system's architecture:
+
+*   **Invoke `ARCHITECTURE_MODE`**:
+    ```text
+    "Design the new [Feature/Module Name] based on docs/PRD.md and docs/technical.md"
+    ```
+*   **Process**:
+    *   Sentinel will load `docs/architecture.mermaid` and other relevant documents.
+    *   It will ask clarifying questions about scale, data flow, and constraints.
+    *   It will propose design options and, upon approval, update `docs/architecture.mermaid` and outline major components.
+*   **Outcome**: A clearer architectural vision and potential high-level epics or areas of work. This output then serves as a more refined input for `PLANNER_MODE`.
+
+**2. Detailed Task Scaffolding with `PLANNER_MODE`**
+
+Once you have a clear idea (either directly from your PRD or refined through `ARCHITECTURE_MODE`), use `PLANNER_MODE` to generate detailed, actionable tasks:
+
+*   **Invoke `PLANNER_MODE`**:
+    ```text
+    "Create tasks for [Feature/User Story description] based on docs/PRD.md, docs/technical.md, and the updated docs/architecture.mermaid. Ensure tasks align with docs/unit_testing_guideline.md."
+    ```
+    Or, if a task doesn't exist when you try to work on it:
+    ```text
+    "Work on [Non-existent Task Name/ID]" // Sentinel will automatically switch to PLANNER_MODE
+    ```
+*   **Process**:
+    *   Sentinel enters `PLANNER_MODE`.
+    *   It loads the specified documents (`docs/PRD.md`, `docs/technical.md`, `docs/architecture.mermaid`, `docs/unit_testing_guideline.md`).
+    *   It may ask clarifying questions to ensure the generated tasks are well-defined.
+    *   It generates a task shell in `tasks/tasks.md` for each identified sub-task, including:
+        *   Task ID, title, status, priority.
+        *   PRD reference and architectural module.
+        *   A step-by-step TDD-based checklist.
+        *   Acceptance criteria.
+        *   Potential edge cases.
+    *   Sentinel will then **ask for your approval** for the generated task(s).
+*   **Outcome**: Ready-to-implement tasks in `tasks/tasks.md`, complete with checklists and acceptance criteria.
+
+Once tasks are approved and exist in `tasks/tasks.md`, you can begin implementation using the strict `TDD_ENFORCEMENT` mode by prompting:
+```text
+"Work on [TASK-ID] use FEATURE_WORK_PROMPT_TEMPLATE"
+```
 
 ---
 
