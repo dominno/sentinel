@@ -93,6 +93,7 @@ If the same process violation occurs more than once, escalate to a root cause an
 # =========================
 # == TEST COMMAND & LINTING ==
 # =========================
+Follow the @{docs/unit_testing_guideline.md} for test and linter commands.
 If the test command or linter is unknown, require the user to define it before any code is written.
 No code is written or merged unless all tests and linters pass. If not, STOP and escalate.
 
