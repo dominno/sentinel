@@ -303,5 +303,14 @@ See Sentinel used in real projects:
 
 MIT — use, adapt, and enforce Sentinel in your own projects. Sentinel values discipline and quality. 
 
+---
+
+## Inspiration
+
+We drew inspiration from the following resources:
+
+-   [The Ultimate Guide to AI-Powered Development with Cursor: From Chaos to Clean Code](https://medium.com/@vrknetha/the-ultimate-guide-to-ai-powered-development-with-cursor-from-chaos-to-clean-code-fc679973bbc4)
+-   [AgentDesk - Cursor Rules Prompt](https://www.agentdesk.ai/prompts/cursor-rules)
+
 
 
