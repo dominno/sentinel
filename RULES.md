@@ -468,6 +468,50 @@ FAIL_SAFE_MODE=|
   List what's missing. Propose 2–3 solutions or clarifying questions.
 
 # =========================
+# == RULE MAINTENANCE MODE ==
+# =========================
+RULE_MAINTENANCE_MODE=|
+  Trigger:
+    - Manually invoked by the user (e.g., "Enter RULE_MAINTENANCE_MODE").
+    - Automatically proposed by the AI after a configurable number of completed tasks (e.g., every 5 tasks, TBD).
+    - Automatically proposed after a threshold of identical process violations logged (e.g., 3 occurrences of the same violation, TBD).
+    - Automatically proposed if a TECH_DEBT_REFACTOR cycle identifies a recurring pattern of inefficiency directly linked to a rule's ambiguity or impracticality.
+
+  Workflow:
+    1. (AI) Data Collection & Analysis:
+        - Upon entering this mode, parse:
+            - @{docs/log.md}: Look for patterns in process violations, error messages, timestamps indicating delays, and retrospectives.
+            - @{docs/status.md}: Look for tasks that stalled, decisions later reverted, or frequent FAIL_SAFE_MODE invocations.
+            - @{tasks/tasks.md}: Look for tasks consistently overrunning estimates or requiring significant re-scoping.
+        - Correlate findings: e.g., "Rule X.Y.Z was cited in 80% of process violations related to TDD."
+
+    2. (AI) Hypothesis Generation & Proposal:
+        - Based on analysis, generate 1-3 targeted rule improvement proposals.
+        - Each proposal must include:
+            - The problematic rule (or area of RULES.md).
+            - Evidence supporting the hypothesis.
+            - The proposed change (specific rephrasing, addition, or deletion).
+            - The expected positive impact (e.g., "Reduce ambiguity in X, leading to fewer FAIL_SAFE_MODE triggers").
+        - Example: "Hypothesis: Rule A.B.C regarding 'specific detail' is too ambiguous. Proposal: Rephrase Rule A.B.C to 'more concrete phrasing'."
+
+    3. (User) Review & Decision:
+        - User reviews AI's analysis and proposals.
+        - User can: Approve, Modify, or Reject (with reasoning) proposals.
+        - Rejected proposals and reasoning are logged by AI in @{docs/log.md} under a "Rule Maintenance Decision" entry.
+
+    4. (AI & User) Implementation & Logging:
+        - Approved changes are implemented in the relevant .mdc rule file. New, standalone rule documents are to be created in the `.cursor/rules/` directory, following a `DESCRIPTIVE_NAME.mdc` naming convention (e.g., `.cursor/rules/custom_tdd_guidelines.mdc`, or as you suggested, `.cursor/rules/custom.mdc` if it's a general custom rule file). AI can draft the changes.
+        - All modifications to rules (what, why, who approved, timestamp) are logged in @{docs/log.md} and in a dedicated "## Rule Changelog" section within RULES.md or a separate rule changelog file.
+
+  Metrics for "Improvement" (to guide analysis and decision-making):
+    - Reduced frequency of specific process violations.
+    - Faster task completion times (without sacrificing quality).
+    - Fewer instances of FAIL_SAFE_MODE activation due to rule ambiguity.
+    - Higher success rate of AI autonomously completing checklist items.
+    - Positive feedback from user retrospectives indicating smoother workflows.
+    - Prevention of ruleset bloat: Prioritize simplification and effectiveness over sheer number of rules. If RULE_MAINTENANCE_MODE consistently proposes adding more rules/specificity without clear evidence of improving development outcomes, this indicates a need to re-evaluate the rule maintenance process itself. The goal is effective development, not just comprehensive rules.
+
+# =========================
 # == TIME LOGGING ==
 # =========================
 TIME_LOGGING=|

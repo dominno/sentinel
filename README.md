@@ -1,5 +1,3 @@
-
-
 # Sentinel: The Disciplined AI Development System
 
 **Sentinel** is a ruleset and execution system that transforms AI coding tools into disciplined, test-driven collaborators. It acts as a programmable operating system for development, enforcing structure, context, and test-first implementation through a set of non-negotiable engineering principles defined in `.cursorrules`.
@@ -240,6 +238,23 @@ Sentinel includes mechanisms for learning and process refinement:
 -   **Root Cause Analysis**: If the same process violation occurs repeatedly, Sentinel mandates a root cause analysis to identify and implement a permanent fix.
 -   **Challenge Comfort Zone**: If a task or test seems too simple, Sentinel requires proposing at least one additional edge case, security scenario, or refactor to ensure thoroughness.
 
+### Rule Evolution with `RULE_MAINTENANCE_MODE`
+
+To ensure the ruleset itself remains effective and adapts to the project's needs, Sentinel includes `RULE_MAINTENANCE_MODE`:
+
+*   **Purpose**: Provides a structured feedback loop for iteratively refining `RULES.md` and any associated `.cursor/rules/*.mdc` files.
+*   **Triggers**: This mode can be:
+    *   Manually invoked by the user.
+    *   Automatically proposed by the AI after a set number of completed tasks.
+    *   Automatically proposed after a threshold of identical process violations is logged.
+    *   Automatically proposed if a `TECH_DEBT_REFACTOR` cycle identifies inefficiencies linked to rule ambiguity or impracticality.
+*   **Workflow**:
+    1.  **AI Data Collection & Analysis**: The AI parses `docs/log.md`, `docs/status.md`, and `tasks/tasks.md` to identify patterns, frequent violations, or rule-induced bottlenecks.
+    2.  **AI Hypothesis & Proposal**: Based on its analysis, the AI generates 1-3 targeted proposals for rule changes (modifications, additions, clarifications, or deletions), including the evidence and expected positive impact.
+    3.  **User Review & Decision**: The user reviews the AI's proposals and can approve, modify, or reject them with reasoning.
+    4.  **Implementation & Logging**: Approved changes are implemented in the relevant rule files (e.g., `RULES.md` or `.cursor/rules/custom.mdc`). All changes are meticulously logged in `docs/log.md` and a dedicated rule changelog.
+*   **Goal**: To enhance rule clarity, effectiveness, and efficiency, while actively preventing ruleset bloat and ensuring the rules facilitate, rather than hinder, high-quality development.
+
 ---
 
 ## Modes Explained
@@ -256,6 +271,7 @@ Sentinel operates in strict modes. The current mode is always announced.
 | `TECH_DEBT_REFACTOR` | Identifies, logs, and prioritizes technical debt                      | Post-task completion, identification of refactor opportunity       |
 | `CONTEXT_RESTORE`    | Loads required documentation before starting any major action         | Start of any task/mode, after context loss                           |
 | `FAIL_SAFE_MODE`     | Stops execution if anything is unclear, ambiguous, or context missing | Missing context, unclear instructions, rule ambiguity                |
+| `RULE_MAINTENANCE_MODE` | Analyzes system performance against rules and proposes improvements to the ruleset itself. | Manual invocation, periodic schedule, repeated process violations, or insights from `TECH_DEBT_REFACTOR`. |
 
 ---
 
