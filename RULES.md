@@ -63,9 +63,75 @@ TRIGGER_BEHAVIOR=|
        - `git commit -m "[TASK-ID] [summary of change]"` to commit the changes.
        - `git checkout develop` to ensure you are on the correct branch.
        - `git merge feature/[task-id]-[slug]` to merge the changes from the feature branch into develop.
-    - Immediately proceed to the next unchecked checklist item or next task, unless a STOP condition is met (unclear, ambiguous, or missing context).
-    - For a new task, always start by executing the full TDD_ENFORCEMENT loop, including GIT FLOW (checkout develop, create new feature branch named for the task ID and slug). Never begin work on a new task without a new feature branch. Log as a process violation if this occurs.
-    - If repeated or unfixable errors are encountered, immediately switch to DEBUGGER_MODE and log the incident.
+    - All status updates (docs/status.md, tasks/tasks.md, docs/log.md) related to the completed task are finalized with canonical timestamps.
+
+  ### TASK_COMPLETION_SUMMARY_GENERATION
+  After a task is fully completed, merged, and all logs/statuses are updated, but BEFORE suggesting the next task:
+    1. The AI must generate a structured Markdown summary for the completed task.
+    2. This summary must be saved in a new file named `tasks/[COMPLETED_TASK_ID].md`.
+    3. The content of `tasks/[COMPLETED_TASK_ID].md` must be structured as follows:
+
+       ```markdown
+       # Task Summary: [COMPLETED_TASK_ID] - [Task Title]
+
+       ## Status: Done
+
+       ## 🎯 What Was Done
+       - [Brief, clear description of the functionality achieved and the problem solved.]
+       - [Reference specific acceptance criteria from tasks/tasks.md that were met.]
+
+       ## 🔗 PRD Alignment
+       - [Briefly explain how this task aligns with and fulfills requirements from @{docs/PRD.md} (citing specific sections if applicable).]
+
+       ## 💻 Code Implemented/Modified
+       - **Key Source Files:**
+         - `path/to/key_file1.ext` (Description of change or purpose)
+         - `path/to/key_file2.ext` (Description of change or purpose)
+       - **Key Functions/Modules Changed:**
+         - `function_name()` in `path/to/file.ext`
+         - `ModuleName`
+       - (If a Pull Request was generated and has a URL, link to it here)
+
+       ## 🧪 Tests Written/Modified
+       - **Key Test Files:**
+         - `path/to/test_file1.ext` (Description of tests added/modified)
+         - `path/to/test_file2.ext` (Description of tests added/modified)
+       - **Coverage Notes:**
+         - [Brief note on the aspects covered by the new/updated tests, e.g., "Covered all acceptance criteria, edge cases X and Y, and error handling for Z."]
+
+       ## 🧐 Final Review Results
+       - **CODE_REVIEWER_MODE Summary:**
+         - [Brief summary of findings/actions from CODE_REVIEWER_MODE, or link to detailed log if extensive.]
+       - **TECH_DEBT_REFACTOR Summary:**
+         - [Brief summary of findings/actions from TECH_DEBT_REFACTOR, or link to detailed log if extensive. Note any new tech debt tasks created.]
+
+       ## 🪵 Link to Main Log Entry
+       - For detailed activity, see log entry around [Timestamp] in @{docs/log.md} for task [COMPLETED_TASK_ID].
+       ```
+    4. The AI will use the `edit_file` tool to create/overwrite this summary file.
+    5. The AI will then confirm: "Task summary created at `tasks/[COMPLETED_TASK_ID].md`."
+
+  ### NEXT_TASK_SUGGESTION_LOGIC
+  After a task is fully completed (including merge, final log/status updates, and Task Completion Summary generation):
+    1. Parse @{tasks/tasks.md} to identify potential next tasks.
+    2. A task is considered a "candidate" if:
+       - Its `Status` is `Planned`. (Tasks `In Progress` should ideally be completed or explicitly re-prioritized by the user. `Blocked` tasks are not candidates.)
+       - All task IDs listed in its `Dependencies` field correspond to tasks that have a `Status` of `Done`. If the `Dependencies` field is empty or absent, the task is considered unblocked.
+    3. From the "candidate" tasks, select the one with the highest `Priority` (Order: High, Medium, Low. Default to High if unspecified). If priorities are equal, select the candidate with the numerically lowest Task ID (or earliest in the file if IDs are not strictly numerical).
+    4. If a candidate task is selected:
+       - Prompt the user: "✅ Task [Previous TASK-ID] completed. Next up is [TASK-ID]: [Title] (Priority: [Priority]). Proceed?"
+       - If the user confirms affirmatively (e.g., "Yes", "Proceed", "Ok"):
+         - The AI will then initiate work on this new task following standard procedure:
+           - Confirm current branch is `develop`. If not, `git checkout develop`.
+           - Create and switch to a new feature branch: `git checkout -b feature/[new_task-id]-[slug]`.
+           - Begin the `TDD_ENFORCEMENT` loop for the first checklist item of the new task.
+       - If the user declines or suggests a different task (e.g., "No", "Wait", "Work on TASK-XYZ instead"):
+         - The AI will state: "Understood. Awaiting your next instruction." It will not pick another task automatically.
+    5. If NO suitable candidate task is identified (e.g., all remaining tasks are blocked, none are `Planned`, or no tasks remain):
+       - Inform the user: "✅ Task [Previous TASK-ID] completed. No unblocked, planned, high-priority tasks found in @{tasks/tasks.md}. Please define a new task, update statuses, or unblock an existing one."
+       - The AI will await further explicit instructions from the user.
+
+  If repeated or unfixable errors are encountered, immediately switch to DEBUGGER_MODE and log the incident.
 
 # =========================
 # == PROCESS VIOLATION LOGGING ==
@@ -163,11 +229,20 @@ AI_BEHAVIOR=|
 
   **Before Start of Task:**
     1. CONTEXT_RESTORE: Reference all required files.
-    2. Checkout develop and create/switch to feature branch (feature/[task-id]-[slug]).
+    2. DEPENDENCY_VIOLATION_CHECK: For the identified [TASK-ID] to be started:
+       - Parse @{tasks/tasks.md} to identify all task IDs listed in its `Dependencies` field.
+       - For each `[DEPENDENT_TASK_ID]` found:
+         - Check its `Status` in @{tasks/tasks.md}.
+         - If the `Status` is not `Done`:
+           - Log the violation in @{docs/log.md} and @{docs/status.md} (Process Violations section).
+           - Enter `FAIL_SAFE_MODE` immediately.
+           - Output the specific message: "🔴 Dependency Check Failed! Cannot proceed with [TASK-ID]: Dependency [DEPENDENT_TASK_ID] is not \'Done\' (current status: [Actual_Status_Of_Dependent_Task]). Please ensure all dependencies are completed before attempting to start [TASK-ID]."
+           - STOP all further attempts to start [TASK-ID] until explicitly re-instructed by the user after dependencies are met or the user explicitly overrides.
+    3. Checkout develop and create/switch to feature branch (feature/[task-id]-[slug]).
        - `git checkout develop` to ensure you are on the correct branch.
-       - `git checkout feature/[task-id]-[slug]` to ensure you are on the correct branch.
-    3. Confirm test command and linter are defined.
-    4. Do not create any code, directories, or artifacts before the branch exists.
+       - `git checkout -b feature/[task-id]-[slug]` to create and switch to the new feature branch. (If switching to an existing feature branch for this task, use `git checkout feature/[task-id]-[slug]`)
+    4. Confirm test command and linter are defined.
+    5. Do not create any code, directories, or artifacts before the branch exists and dependency checks have passed.
 
   **Before Marking Task Complete:**
     1. All tests have been run and pass.
@@ -240,9 +315,9 @@ AI_AUTONOMY=|
   ❌ The instructions are unclear  
   ❌ Multiple valid interpretations exist  
   ❌ PRD or plan is missing  
-  ❌ Architecture might be violated  
-  ❌ Code changes affect multiple modules  
-  ❌ You're deleting or replacing existing logic
+  ❌ Architecture might be violated (AI must state: "This proposed change might violate [specific architectural principle/boundary in @{docs/architecture.mermaid}]. How should I proceed?")
+  ❌ Code changes affect multiple modules (AI must clearly state the potential impact, e.g., "This proposed change is a structural refactor that is estimated to affect [N] modules and/or approximately [M] files: [list up to 3-5 key modules/files if easily identifiable, or state 'across several areas including X, Y, Z']. This type of refactor should typically be its own dedicated task or part of a `TECH_DEBT_REFACTOR` cycle. Shall I create a new task proposal for this refactor, or how should I proceed?")
+  ❌ You're deleting or replacing existing logic (If significant, AI should confirm: "This will delete/replace substantial existing logic for [feature/module]. Please confirm.")
 
   ✅ DO NOT ask for confirmation when:
     - Writing tests for known behavior
@@ -251,7 +326,7 @@ AI_AUTONOMY=|
     - Pushing commits for completed/tested work
     - Updating status/log
     - Naming variables or constants using conventions
-    - There are unchecked checklist items in tasks/tasks.md (proceed to the next one automatically)
+    - Proceeding to the next unchecked checklist item *within the current active task*. (For starting a *new task* after current task completion, `NEXT_TASK_SUGGESTION_LOGIC` will prompt for confirmation.)
 
   Only stop if a checklist item is ambiguous, missing, or blocked by a dependency.
 
@@ -266,12 +341,15 @@ IMPLEMENTATION_PLANS=|
   tasks/tasks.md is the source of truth for execution.
 
   Each task must include:
-    - Task ID, title, status, priority
+    - Task ID, title
+    - Status (must be one of: Planned | In Progress | Blocked | Done)
+    - Priority
     - PRD reference
     - Step-by-step implementation checklist
     - Dependencies
     - Acceptance criteria
     - Edge cases or known blockers
+    - Complexity estimates (e.g., Story Points, T-shirt size) (optional)
 
   ❗ NEVER implement unless the task is clearly defined.
 
@@ -347,13 +425,38 @@ ARCHITECTURE_MODE=|
 PLANNER_MODE=|
   Trigger: Enter PLANNER_MODE when a new feature, request, or PRD is received that does not match an existing task in tasks/tasks.md.
   Begin with CONTEXT_RESTORE.
-  1. Load the relevant PRD and architecture file
-  2. Ask 4–6 clarifying questions only if needed
-  3. Use the embedded "Task Shell Generator" logic to scaffold a complete task entry in tasks/tasks.md (see TASK_SHELL_GENERATOR_TEMPLATE below for required format)
-  4. All generated plans and checklists must adhere to CODE_QUALITY principles (SOLID, KISS, DRY, etc.).
-  5. If a plan violates CODE_QUALITY, STOP and revise before proceeding.
-  6. Insert the task into tasks/tasks.md
-  7. Ask for approval before starting implementation using the TDD loop.
+  1. Load the relevant PRD and architecture file (@{docs/PRD.md}, @{docs/architecture.mermaid}, @{docs/technical.md}).
+  2. Ask 4–6 clarifying questions *only if needed* to understand the scope and deliverables of the requested feature.
+  3. (AI) Initial Complexity Analysis & Breakdown:
+     - Based on the input and loaded documents, estimate an initial complexity for the overall requested feature on a scale of 1-10.
+     - If the overall estimated complexity is > 7, attempt to break the feature down into smaller, logical sub-features or epics. For each sub-feature/epic, estimate its complexity (1-10), aiming for individual components to be complexity 7 or less.
+     - These sub-features/epics will become the basis for individual task generation.
+  4. For each feature/sub-feature identified:
+     - Use the embedded "Task Shell Generator" logic to scaffold a complete task entry in tasks/tasks.md (see TASK_SHELL_GENERATOR_TEMPLATE below for required format). The AI must populate the `Complexity` field in the template with its 1-10 numerical estimate for that specific task.
+  5. All generated plans and checklists must adhere to CODE_QUALITY principles (SOLID, KISS, DRY, etc.).
+  6. If a plan violates CODE_QUALITY, STOP and revise before proceeding.
+  7. (AI) Complexity/Unknowns Review, Research Prompt & Execution:
+     - For each generated task in the proposed plan (or the overall feature if not yet broken down):
+       - Let `task_complexity` be the AI-estimated complexity (1-10) for the current task/feature.
+       - Identify "unknowns": The AI may infer "unknowns" from vague task descriptions, novel concepts not in its immediate knowledge base, or if the user explicitly flags an area as an "unknown" (e.g., "This task involves X, which is an unknown").
+       - If `task_complexity` > 7 OR if "unknowns" are identified:
+         - The AI states: "Task [TASK-ID]: [Title] has an estimated complexity of [task_complexity] and/or involves potential unknowns regarding [details of unknowns, if any]."
+         - The AI then asks: "Should I research best practices or relevant libraries first?"
+         - If the user responds affirmatively (e.g., "Yes", "Please research"):
+           - The AI will formulate a search query relevant to the task's domain or unknowns (e.g., "Search for 'best practices for [topic]' or 'libraries for [task type]'").
+           - It will then use the `web_search` tool, explaining: "I will now search the web for information related to [formulated query] to inform our planning."
+           - After receiving search results, the AI will synthesize the information into a summary.
+           - The AI will then create a new file `docs/research/[TASK-ID].md` using the `edit_file` tool, populating it with the research summary. (User should ensure `docs/research/` directory can be created or exists).
+           - The AI informs the user: "I have created a research summary at `docs/research/[TASK-ID].md`. Please review it. How should we proceed with planning for [TASK-ID] (e.g., refine checklist, adjust complexity, break down further, or proceed as is)?"
+           - The AI awaits user direction. Planning for this task (e.g., detailed checklist generation if not already done, or refinement) will resume based on user feedback and the research. The AI may re-evaluate complexity based on research.
+         - If the user declines research (or if the initial complexity/unknowns trigger was not met and complexity is still > 7):
+           - If `task_complexity` > 7, the AI must explicitly flag this task: "Task [TASK-ID]: [Title] has an estimated complexity of [task_complexity]. This may be too large for a single iteration."
+           - The AI should then propose options:
+             - "Option 1: I can break this task into smaller sub-tasks by invoking the `TASK_EXPANSION_PROTOCOL`. Shall I proceed with that?"
+             - "Option 2: You can refine the scope of this task or confirm you want to proceed with it at this complexity."
+             - The AI must await user feedback. If Option 1 is chosen, the AI will initiate the `TASK_EXPANSION_PROTOCOL` for this [TASK-ID].
+  8. Insert the proposed task(s) (once complexity, research, and expansion concerns are addressed) into tasks/tasks.md.
+  9. Ask for approval of the generated plan (including all tasks and their structures) before starting implementation using the TDD loop.
 
 # =========================
 # == TASK SHELL GENERATOR TEMPLATE ==
@@ -367,6 +470,7 @@ TASK_SHELL_GENERATOR_TEMPLATE=|
   PRD Reference: @{docs/PRD.md}  
   Architectural Module: [inferred module]  
   Dependencies: [e.g. email service, DB, JWT]
+  Complexity: [AI-estimated 1-10, e.g., 5]
 
   ### 🔧 Implementation Plan
   - [ ] Step-by-step TDD-based checklist (10–15 max)
@@ -384,6 +488,45 @@ TASK_SHELL_GENERATOR_TEMPLATE=|
   - [Failure states]
 
   === End Format ===
+
+# =========================
+# == TASK EXPANSION PROTOCOL ==
+# =========================
+TASK_EXPANSION_PROTOCOL=|
+  Trigger:
+    - During `PLANNER_MODE`, if the AI's "Option 1: I can attempt to break this specific task into smaller sub-tasks..." is chosen by the user for a task deemed too complex.
+    - By explicit user command, e.g., "Expand [TASK-ID] into sub-tasks."
+
+  Process:
+    1. Identify Parent Task: Clearly identify the [PARENT_TASK_ID] that needs expansion.
+    2. (AI) Propose Sub-task Breakdown:
+       - The AI analyzes the [PARENT_TASK_ID] (its description, acceptance criteria, current checklist if any) and proposes a logical set of 2-5 sub-tasks required to complete it.
+       - For each proposed sub-task:
+         - Assign a unique ID: `[PARENT_TASK_ID].1`, `[PARENT_TASK_ID].2`, etc.
+         - Define a clear title, description, and initial checklist (1-3 items focusing on the sub-task's core deliverable).
+         - Estimate its complexity (1-10), aiming for sub-tasks to be 7 or less.
+         - Identify any dependencies *between these new sub-tasks*.
+         - Inherit relevant context (e.g., PRD Reference, Architectural Module) from the parent task, but tailor details to the sub-task.
+    3. (User) Review & Approve Breakdown:
+       - The AI presents the proposed list of sub-tasks (IDs, titles, brief descriptions, complexities) and how the parent task will be updated.
+       - The user reviews this breakdown and can approve, request modifications, or cancel.
+    4. (AI) Implement Approved Breakdown in @{tasks/tasks.md}:
+       - If approved by the user:
+         - For each defined sub-task: Create a full new task entry in @{tasks/tasks.md} using the `TASK_SHELL_GENERATOR_TEMPLATE`, populating it with the details defined in step 2. Ensure `Status` is `Planned`.
+         - Update the Parent Task ([PARENT_TASK_ID]) in @{tasks/tasks.md}:
+           - Change its `Status` to `Epic` (or `Container`).
+           - Replace its `### 🔧 Implementation Plan` (checklist) with a list of its sub-task IDs: 
+             ```markdown
+             ### Sub-tasks:
+             - [PARENT_TASK_ID].1
+             - [PARENT_TASK_ID].2
+             - ...
+             ```
+           - Its `Dependencies` field should remain (if it had any external ones). Its `Complexity` might be marked N/A or represent the sum/overhead.
+           - Add a note: "This task has been expanded into sub-tasks. Its completion depends on all sub-tasks being 'Done'."
+    5. Confirmation: AI confirms: "Task [PARENT_TASK_ID] has been expanded into sub-tasks: [list of new sub-task IDs]. Parent task status updated to Epic. Sub-tasks added to @{tasks/tasks.md}."
+
+  Note: An `Epic` task is considered `Done` only when all its direct sub-tasks listed in its implementation plan are `Done`. This check should be part of the `DEFINITION_OF_DONE` logic if applied to an Epic, or handled during status updates.
 
 # =========================
 # == DEBUGGER MODE ==
@@ -510,6 +653,34 @@ RULE_MAINTENANCE_MODE=|
     - Higher success rate of AI autonomously completing checklist items.
     - Positive feedback from user retrospectives indicating smoother workflows.
     - Prevention of ruleset bloat: Prioritize simplification and effectiveness over sheer number of rules. If RULE_MAINTENANCE_MODE consistently proposes adding more rules/specificity without clear evidence of improving development outcomes, this indicates a need to re-evaluate the rule maintenance process itself. The goal is effective development, not just comprehensive rules.
+
+# =========================
+# == RESEARCH MODE ==
+# =========================
+RESEARCH_MODE=|
+  Trigger:
+    - Explicit user command: "Enter RESEARCH_MODE for [TASK-ID]" or "Research [specific topic/question] for [TASK-ID]".
+
+  Process:
+    1. Begin with CONTEXT_RESTORE (referencing @{tasks/tasks.md}, @{docs/PRD.md}, and the specific [TASK-ID] if its research file @{docs/research/[TASK-ID].md} already exists).
+    2. Identify Target Task & Scope:
+       - The AI confirms the [TASK-ID] for which research is being conducted.
+       - If the user provided a [specific topic/question], the AI confirms this as the research focus.
+       - If no specific topic is given, the AI analyzes the task description and current plan for [TASK-ID] from @{tasks/tasks.md} and may ask: "What specific aspects, questions, or topics should I focus my research on for [TASK-ID]? Or shall I research general best practices related to its description?"
+    3. Formulate Search Queries:
+       - Based on the task and defined scope, the AI formulates 1-3 targeted search queries.
+    4. Execute Research using `web_search`:
+       - For each query, the AI uses the `web_search` tool, explaining: "I will now search the web for: '[search_query]' to gather information for [TASK-ID]."
+    5. Synthesize Findings & Create/Update Summary:
+       - The AI analyzes the search results, prioritizing relevance, authoritativeness, and recency.
+       - It synthesizes this information, potentially alongside its internal knowledge, into a structured summary.
+       - The AI creates or updates the file `docs/research/[TASK-ID].md` using the `edit_file` tool. The summary should be well-organized (e.g., using headings for different findings or sources) and clearly state key takeaways, potential solutions/approaches, relevant libraries/tools, or best practices identified.
+       - If `docs/research/[TASK-ID].md` already existed, the AI should clearly indicate that it is updating or appending to the existing research, perhaps under a new timestamped section.
+    6. Confirmation & Next Steps:
+       - The AI informs the user: "Research summary for [TASK-ID] has been saved/updated at `docs/research/[TASK-ID].md`. Key findings include [1-2 brief key takeaways]."
+       - The AI then asks: "How would you like to proceed with [TASK-ID] based on this research? (e.g., update its plan/checklist in @{tasks/tasks.md}, proceed to implementation, request further research, or another action)."
+
+  Note: This mode is intended for focused research. If the outcome requires significant re-planning or new task generation, the AI might suggest transitioning to `PLANNER_MODE` after research review.
 
 # =========================
 # == TIME LOGGING ==
