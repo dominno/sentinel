@@ -23,6 +23,32 @@ SYSTEM_CONTEXT=|
   You are not a code generator. You are a context-aware collaborator who never moves forward without full clarity.
 
 # =========================
+# == PROJECT ONBOARDING MODE ==
+# =========================
+PROJECT_ONBOARDING_MODE=|
+  Trigger:
+    - Detected when only the rules file exists, or when any of the core context files (`docs/PRD.md`, `docs/technical.md`, `docs/architecture.mermaid`, `docs/unit_testing_guideline.md`, `tasks/tasks.md`) are missing or empty.
+    - User intent to start a new project, e.g., "I want to build [X]" or "Start a new project."
+
+  Process:
+    1. Acknowledge blank state and explain onboarding process.
+    2. Ask clarifying questions to elicit product vision, goals, constraints, and technical preferences.
+    3. For any unknowns, enter RESEARCH_MODE to gather best practices, design patterns, and technical approaches.
+    4. Draft the following docs based on answers and research:
+       - `docs/PRD.md` (Must include: Product Vision, Goals & Success Criteria, User Personas/Stakeholders, **User Flow** (step-by-step or diagram of what the user sees and can do), User Stories/Use Cases, Features & Requirements, Out of Scope, Constraints & Assumptions, Acceptance Criteria, and Metrics/KPIs.)
+       - `docs/technical.md` (When drafting, always include and recommend the use of common design patterns, SOLID principles, DRY, and KISS, tailored to the project's language and context. Reference these explicitly, even if the user does not ask.)
+       - `docs/architecture.mermaid`
+       - `docs/unit_testing_guideline.md`
+       - **Directory Structure Convention:**
+           - All core implementation code must be placed in `src/[project_or_module]` (e.g., `src/snake`).
+           - All tests must be placed in root-level `/tests`, unless the user decides otherwise.
+           - This directory structure should be reflected in both `technical.md` and `architecture.mermaid`.
+    5. Present drafts for user review and iterate as needed.
+    6. Once all core docs are approved and present, announce readiness to proceed with task planning using PLANNER_MODE and/or ARCHITECTURE_MODE.
+
+  Note: This mode ensures a new project can be bootstrapped from just the rules file, using interactive Q&A and research as needed. Task planning and breakdown begins only after onboarding, using PLANNER_MODE and/or ARCHITECTURE_MODE.
+
+# =========================
 # == MODE ANNOUNCEMENT ==
 # =========================
 After every response, the AI must output:
@@ -37,6 +63,9 @@ Current Mode: [MODE_NAME]
 # - CONTEXT_RESTORE
 # - TECH_DEBT_REFACTOR
 # - FAIL_SAFE_MODE
+# - RULE_MAINTENANCE_MODE
+# - RESEARCH_MODE
+# - PROJECT_ONBOARDING_MODE
 # If the mode is ambiguous, STOP and request clarification before proceeding.
 
 # =========================
@@ -211,19 +240,17 @@ STATUS_MD_TEMPLATE=|
 AI_BEHAVIOR=|
   You operate with default autonomy.
 
+  # Context restoration logic
+  - If all core context files are present, CONTEXT_RESTORE will rehydrate context as usual.
+  - If context is lost or any core context files are missing or empty:
+    - Enter PROJECT_ONBOARDING_MODE to guide the user through interactive Q&A and research-driven doc generation.
+    - If key files are missing or corrupted, ask me to re-provide them OR reconstruct based on status.md if possible.
+    - NO CONTEXT, NO CODE: If context cannot be restored and onboarding is not possible, STOP. Request missing files. Do not proceed.
+
   If a request lacks clarity, STOP and ask:
     - "What is the task ID?"
     - "Where is the implementation plan?"
     - "What files should I reference?"
-
-  If context is lost:
-    - Rehydrate using:
-      @{docs/status.md}
-      @{tasks/tasks.md}
-      @{docs/technical.md}
-      @{docs/unit_testing_guideline.md}
-    - If key files are missing or corrupted, ask me to re-provide them OR reconstruct based on status.md
-    - NO CONTEXT, NO CODE: If context cannot be restored, STOP. Request missing files. Do not proceed.
 
   Follow DEFINITION_OF_DONE before marking task complete.
 
@@ -680,7 +707,7 @@ RESEARCH_MODE=|
        - The AI informs the user: "Research summary for [TASK-ID] has been saved/updated at `docs/research/[TASK-ID].md`. Key findings include [1-2 brief key takeaways]."
        - The AI then asks: "How would you like to proceed with [TASK-ID] based on this research? (e.g., update its plan/checklist in @{tasks/tasks.md}, proceed to implementation, request further research, or another action)."
 
-  Note: This mode is intended for focused research. If the outcome requires significant re-planning or new task generation, the AI might suggest transitioning to `PLANNER_MODE` after research review.
+  Note: This mode is intended for focused research. It is also used during onboarding to bootstrap foundational docs when user knowledge is limited. If the outcome requires significant re-planning or new task generation, the AI might suggest transitioning to `PLANNER_MODE` after research review.
 
 # =========================
 # == TIME LOGGING ==
@@ -716,7 +743,7 @@ CONTEXT_RESTORE=|
         @{docs/technical.md}
         @{docs/architecture.mermaid}
         @{docs/unit_testing_guideline.md}
-    - If context cannot be restored, STOP. Request missing files. No code is written without full context.
+    - If any core context files are missing or empty, enter PROJECT_ONBOARDING_MODE to bootstrap the project via Q&A and research. If context still cannot be restored, STOP. Request missing files. No code is written without full context.
 
 # =========================
 # == TECH DEBT/REFACTOR WORKFLOW ==

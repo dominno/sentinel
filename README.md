@@ -25,7 +25,26 @@ Modern AI tools are powerful code generators, but often lack context, violate ar
 
 [![Watch the video](https://img.youtube.com/vi/Pu5OOsZK-D0/0.jpg)](https://www.youtube.com/watch?v=Pu5OOsZK-D0)
 
+# Quick Start (Cursor)
+
+Want to start a new project with Sentinel in Cursor? Just do this:
+
+1. **Copy the rules file:**
+   - Download or copy `RULES.md` from this repo into your new project directory as `.cursorrules`.
+
+2. **Open Cursor in your project directory.**
+
+3. **Trigger onboarding:**
+   - Type: "I want to build [YOUR PROJECT IDEA]" in the Cursor chat.
+   - Sentinel will enter onboarding mode, ask clarifying questions, and generate all required docs (`docs/PRD.md`, `docs/technical.md`, `docs/architecture.mermaid`, `docs/unit_testing_guideline.md`, `tasks/tasks.md`).
+
+4. **Review and approve the generated docs.**
+
+5. **You're ready to plan and build—Sentinel will guide you step by step!**
+
 ## Setup
+
+> **Already using Cursor? See the Quick Start above for the fastest way to begin!**
 
 1.  **Install Your AI Tool**: Sentinel works with tools like Cursor, Winsurf, etc. (Install your preferred tool).
 2.  **Clone Sentinel (or Copy Rules)**:
@@ -40,10 +59,7 @@ Modern AI tools are powerful code generators, but often lack context, violate ar
       docs/PRD.md \
       docs/technical.md \
       docs/architecture.mermaid \
-      docs/unit_testing_guideline.md \
-      docs/status.md \
-      docs/log.md \
-      tasks/tasks.md
+      docs/unit_testing_guideline.md      
     ```
 4.  **Define Test + Lint Commands**: Add your project's specific test and lint commands to `docs/unit_testing_guideline.md`. Sentinel will not run without these commands defined.
 5.  **Install and Configure MCP Time Server**: Sentinel uses a Model Context Protocol (MCP) time server for consistent timestamps in logs.
@@ -60,6 +76,16 @@ Modern AI tools are powerful code generators, but often lack context, violate ar
         }
         ```
 6.  **Populate Initial Docs**: Fill in `docs/PRD.md`, `docs/technical.md`, `docs/architecture.mermaid`, and `docs/unit_testing_guideline.md` with your project's specifics.
+
+# What should each file contain?
+
+- **docs/PRD.md**: Product Requirements Document. Should include Product Vision, Goals & Success Criteria, User Personas/Stakeholders, User Flow (step-by-step or diagram of what the user sees and can do), User Stories/Use Cases, Features & Requirements, Out of Scope, Constraints & Assumptions, Acceptance Criteria, and Metrics/KPIs.
+- **docs/technical.md**: Technical guidelines and engineering standards. Should specify design patterns, architectural constraints, code quality principles (SOLID, DRY, KISS), and any technology-specific requirements or recommendations.
+- **docs/architecture.mermaid**: System boundaries and data flows, expressed as a Mermaid diagram. Should show modules, their relationships, and how data moves through the system.
+- **docs/unit_testing_guideline.md**: How to run tests, what test/lint commands to use, and expectations for test coverage and style (e.g., TDD, edge cases, error handling).
+
+> **Not sure how to create these files?**
+> Use the Quick Start onboarding above! Just copy the rules file, open Cursor, and describe your project idea. Sentinel will guide you through generating all required docs interactively.
 
 ---
 
