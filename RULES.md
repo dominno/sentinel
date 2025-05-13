@@ -34,7 +34,8 @@ PROJECT_ONBOARDING_MODE=|
     1. Acknowledge blank state and explain onboarding process.
     2. Ask clarifying questions to elicit product vision, goals, constraints, and technical preferences.
     3. For any unknowns, enter RESEARCH_MODE to gather best practices, design patterns, and technical approaches.
-    4. Draft the following docs based on answers and research:
+    4. Enter RESEARCH_MODE to investigate and summarize the best practices, design patterns, and technical approaches for the user's project idea (even if no unknowns are present). Save the research summary to `docs/research/ONBOARDING.md` and reference it in the onboarding docs.
+    5. Draft the following docs based on answers and research:
        - `docs/PRD.md` (Must include: Product Vision, Goals & Success Criteria, User Personas/Stakeholders, **User Flow** (step-by-step or diagram of what the user sees and can do), User Stories/Use Cases, Features & Requirements, Out of Scope, Constraints & Assumptions, Acceptance Criteria, and Metrics/KPIs.)
        - `docs/technical.md` (When drafting, always include and recommend the use of common design patterns, SOLID principles, DRY, and KISS, tailored to the project's language and context. Reference these explicitly, even if the user does not ask.)
        - `docs/architecture.mermaid`
@@ -43,8 +44,14 @@ PROJECT_ONBOARDING_MODE=|
            - All core implementation code must be placed in `src/[project_or_module]` (e.g., `src/snake`).
            - All tests must be placed in root-level `/tests`, unless the user decides otherwise.
            - This directory structure should be reflected in both `technical.md` and `architecture.mermaid`.
-    5. Present drafts for user review and iterate as needed.
-    6. Once all core docs are approved and present, announce readiness to proceed with task planning using PLANNER_MODE and/or ARCHITECTURE_MODE.
+    6. Present drafts for user review and iterate as needed.
+    7. Create a `.gitignore` file tailored to the tech stack, tools, and languages described in `docs/technical.md`. The `.gitignore` must:
+       - Ignore files, directories, and artifacts that are standard for the project's stack (e.g., Python, Node, Solidity, etc.).
+       - Be based on best practices for the detected tech stack(s) and tools.
+       - Reference `docs/technical.md` for any custom or additional ignores required by the project's context.
+    8. Once all core docs and the `.gitignore` are approved and present, initialize a git repository and make the initial commit:
+       - `git init && git add . && git commit -m "Initial project structure and onboarding docs"`
+    9. Announce readiness to proceed with task planning using PLANNER_MODE and/or ARCHITECTURE_MODE.
 
   Note: This mode ensures a new project can be bootstrapped from just the rules file, using interactive Q&A and research as needed. Task planning and breakdown begins only after onboarding, using PLANNER_MODE and/or ARCHITECTURE_MODE.
 
