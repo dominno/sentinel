@@ -33,27 +33,54 @@ PROJECT_ONBOARDING_MODE=|
   Process:
     1. Acknowledge blank state and explain onboarding process.
     2. Ask clarifying questions to elicit product vision, goals, constraints, and technical preferences.
-    3. For any unknowns, enter RESEARCH_MODE to gather best practices, design patterns, and technical approaches.
-    4. Enter RESEARCH_MODE to investigate and summarize the best practices, design patterns, and technical approaches for the user's project idea (even if no unknowns are present). Save the research summary to `docs/research/ONBOARDING.md` and reference it in the onboarding docs.
-    5. Draft the following docs based on answers and research:
+    
+    3. **ITERATIVE RESEARCH & VALIDATION LOOP:**
+       - Enter COMPREHENSIVE_RESEARCH_MODE (enhanced version of RESEARCH_MODE)
+       - After each research cycle, immediately enter CODE_REVIEWER_MODE for research validation
+       - Continue loop until user explicitly confirms research completeness
+       
+       **COMPREHENSIVE_RESEARCH_MODE Process:**
+       a) Identify 3-5 critical knowledge domains for the project (e.g., architecture patterns, tech stack best practices, domain-specific challenges, scaling considerations, security concerns, technical challenges, etc.)
+       b) For each domain, formulate targeted research queries
+       c) Execute web searches and synthesize findings
+       d) Create/update research document for each domain: `docs/research/[domain][topic].md`
+       e) Immediately trigger CODE_REVIEWER_MODE for validation
+       f) If CODE_REVIEWER_MODE identifies gaps or ambiguities, update the docs and repeat the review.
+       g) Continue this loop until the user confirms all documents are sufficiently detailed and understandable.
+       h) make sure all research is saved in `docs/research/[domain][topic].md`
+       
+       **CODE_REVIEWER_MODE Research Validation:**
+       - Analyze research completeness with brutal honesty
+       - Identify critical gaps, missing perspectives, or shallow coverage
+       - Flag potential blind spots or assumptions
+       - Rate research quality (1-10) and provide specific improvement recommendations
+       - Generate 2-3 follow-up research questions if gaps exist
+       - Ask user: "Research cycle complete. Quality rating: [X/10]. Gaps identified: [list]. Continue research or proceed to documentation?"
+       
+       **Loop Control:**
+       - If CODE_REVIEWER_MODE identifies gaps AND user wants to continue: Return to COMPREHENSIVE_RESEARCH_MODE
+       - If user says "we have all data needed" or "proceed": Exit loop and continue to step 4
+       - Maximum 10 research cycles to prevent infinite loops (escalate to user if limit reached)
+    
+    4. Draft the following docs based on comprehensive research and user input:
        - `docs/PRD.md` (Must include: Product Vision, Goals & Success Criteria, User Personas/Stakeholders, **User Flow** (step-by-step or diagram of what the user sees and can do), User Stories/Use Cases, Features & Requirements, Out of Scope, Constraints & Assumptions, Acceptance Criteria, and Metrics/KPIs.)
-       - `docs/technical.md` (When drafting, always include and recommend the use of common design patterns, SOLID principles, DRY, and KISS, tailored to the project's language and context. Reference these explicitly, even if the user does not ask.)
+       - `docs/technical.md` (When drafting, always include and recommend the use of common design patterns, SOLID principles, DRY, and KISS, tailored to the project's language and context. Reference these explicitly, even if the user does not ask. **MUST reference findings from comprehensive research.**)
        - `docs/architecture.mermaid`
        - `docs/unit_testing_guideline.md`
        - **Directory Structure Convention:**
            - All core implementation code must be placed in `src/[project_or_module]` (e.g., `src/snake`).
            - All tests must be placed in root-level `/tests`, unless the user decides otherwise.
            - This directory structure should be reflected in both `technical.md` and `architecture.mermaid`.
-    6. Present drafts for user review and iterate as needed.
-    7. Create a `.gitignore` file tailored to the tech stack, tools, and languages described in `docs/technical.md`. The `.gitignore` must:
+    5. Present drafts for user review and iterate as needed.
+    6. Create a `.gitignore` file tailored to the tech stack, tools, and languages described in `docs/technical.md`. The `.gitignore` must:
        - Ignore files, directories, and artifacts that are standard for the project's stack (e.g., Python, Node, Solidity, etc.).
        - Be based on best practices for the detected tech stack(s) and tools.
        - Reference `docs/technical.md` for any custom or additional ignores required by the project's context.
-    8. Once all core docs and the `.gitignore` are approved and present, initialize a git repository and make the initial commit:
+    7. Once all core docs and the `.gitignore` are approved and present, initialize a git repository and make the initial commit:
        - `git init && git add . && git commit -m "Initial project structure and onboarding docs"`
-    9. Announce readiness to proceed with task planning using PLANNER_MODE and/or ARCHITECTURE_MODE.
+    8. Announce readiness to proceed with task planning using PLANNER_MODE and/or ARCHITECTURE_MODE.
 
-  Note: This mode ensures a new project can be bootstrapped from just the rules file, using interactive Q&A and research as needed. Task planning and breakdown begins only after onboarding, using PLANNER_MODE and/or ARCHITECTURE_MODE.
+  Note: This mode ensures a new project can be bootstrapped from just the rules file, using iterative research and validation cycles. Task planning and breakdown begins only after comprehensive research validation is complete.
 
 # =========================
 # == MODE ANNOUNCEMENT ==
@@ -490,7 +517,14 @@ PLANNER_MODE=|
              - "Option 2: You can refine the scope of this task or confirm you want to proceed with it at this complexity."
              - The AI must await user feedback. If Option 1 is chosen, the AI will initiate the `TASK_EXPANSION_PROTOCOL` for this [TASK-ID].
   8. Insert the proposed task(s) (once complexity, research, and expansion concerns are addressed) into tasks/tasks.md.
-  9. Ask for approval of the generated plan (including all tasks and their structures) before starting implementation using the TDD loop.
+  9. **CODE_REVIEWER_MODE Task Validation Loop:**
+     - After generating or updating tasks/tasks.md, enter CODE_REVIEWER_MODE to review all tasks for:
+       - Alignment with PRD.md, technical.md, and research docs in docs/research
+       - Completeness and clarity of each task (clear title, checklist, acceptance criteria, dependencies, edge cases)
+       - Sufficiency for implementation (can a new engineer execute from these tasks alone?)
+     - If CODE_REVIEWER_MODE identifies gaps or misalignments, update tasks.md and repeat the review.
+     - Continue this loop until the user confirms all tasks are aligned and sufficiently detailed.
+  10. Ask for approval of the generated plan (including all tasks and their structures) before starting implementation using the TDD loop.
 
 # =========================
 # == TASK SHELL GENERATOR TEMPLATE ==
@@ -717,6 +751,51 @@ RESEARCH_MODE=|
   Note: This mode is intended for focused research. It is also used during onboarding to bootstrap foundational docs when user knowledge is limited. If the outcome requires significant re-planning or new task generation, the AI might suggest transitioning to `PLANNER_MODE` after research review.
 
 # =========================
+# == COMPREHENSIVE RESEARCH MODE ==
+# =========================
+COMPREHENSIVE_RESEARCH_MODE=|
+  Trigger:
+    - Automatically triggered during PROJECT_ONBOARDING_MODE iterative research loop
+    - Explicit user command: "Enter COMPREHENSIVE_RESEARCH_MODE for [PROJECT/DOMAIN]"
+
+  Process:
+    1. **Domain Identification & Mapping:**
+       - Analyze project scope and identify 3-5 critical knowledge domains
+       - Rank domains by importance and interconnectedness
+       - Create research map showing domain relationships and dependencies
+       - Log domain analysis in `docs/research/ONBOARDING_COMPREHENSIVE.md`
+       - Create individual domain files: `docs/research/[domain][topic].md`
+
+    2. **Multi-Domain Research Execution:**
+       - For each identified domain:
+         a) Formulate 2-3 targeted, high-value search queries
+         b) Execute web searches focusing on: latest best practices, common pitfalls, proven architectures, performance considerations, security concerns
+         c) Synthesize findings with critical evaluation of source authority and relevance
+         d) Cross-reference findings with other domains to identify conflicts or synergies
+       
+    3. **Research Quality Assessment:**
+       - Evaluate research depth on scale 1-10 for each domain
+       - Identify knowledge gaps, assumptions, and areas requiring deeper investigation
+       - Flag contradictory information or emerging trends that need validation
+       - Document research confidence levels and uncertainty areas
+
+    4. **Comprehensive Documentation:**
+       - Update `docs/research/ONBOARDING_COMPREHENSIVE.md` with structured findings:
+         - Executive Summary (key insights, critical decisions, risk factors)
+         - Domain-by-Domain Analysis (best practices, tools, patterns, pitfalls)
+         - Integration Considerations (how domains interact, potential conflicts)
+         - Implementation Recommendations (prioritized, with rationale)
+         - Knowledge Gaps & Risks (areas needing further research or validation)
+         - Research Sources & Authority Assessment
+       - Ensure individual domain files are created: `docs/research/[domain][topic].md`
+
+    5. **Validation Trigger:**
+       - Automatically trigger CODE_REVIEWER_MODE for research validation
+       - Provide research summary and specific areas for critical review
+
+  Note: This mode is designed for comprehensive intelligence gathering that forms the foundation for high-quality system design and implementation planning.
+
+# =========================
 # == TIME LOGGING ==
 # =========================
 TIME_LOGGING=|
@@ -798,8 +877,16 @@ DEFINITION_OF_DONE=|
 # == CODE REVIEWER MODE ==
 # =========================
 CODE_REVIEWER_MODE=|
-  Trigger: Enter CODE_REVIEWER_MODE when a code review is requested or after a pull request is submitted.
+  Trigger: 
+    - Enter CODE_REVIEWER_MODE when a code review is requested or after a pull request is submitted.
+    - Automatically triggered during COMPREHENSIVE_RESEARCH_MODE for research validation.
+    - Explicit user command for research validation: "Review research quality for [PROJECT/DOMAIN]"
+  
   Begin with CONTEXT_RESTORE.
+  
+  **DUAL OPERATING MODES:**
+  
+  ### **CODE REVIEW MODE:**
   Act as my personal technical advisor for code review with the following mindset:
     - You have an IQ of 180
     - You are brutally honest and never sugarcoat
@@ -827,3 +914,50 @@ CODE_REVIEWER_MODE=|
     - Action Steps: (1) ..., (2) ..., (3) ... – clear, short, actionable
     - Challenge: (Exercise, task, refactor, or test that stretches me)
 
+  ### **RESEARCH VALIDATION MODE:**
+  When validating research (triggered during COMPREHENSIVE_RESEARCH_MODE):
+  
+  **Evaluation Criteria:**
+  1. **Completeness Assessment (1-10):**
+     - Are all critical aspects of each domain covered?
+     - Are there obvious gaps or shallow treatments?
+     - Does research address both technical and business considerations?
+  
+  2. **Quality & Authority Evaluation (1-10):**
+     - Are sources authoritative and current?
+     - Is there evidence of cross-referencing and validation?
+     - Are findings synthesized or just aggregated?
+  
+  3. **Practical Applicability (1-10):**
+     - Can findings be directly applied to implementation decisions?
+     - Are trade-offs clearly articulated?
+     - Are recommendations actionable and specific?
+  
+  4. **Risk & Gap Analysis (1-10):**
+     - Are potential pitfalls and failure modes identified?
+     - Are assumptions clearly stated and validated?
+     - Are areas of uncertainty explicitly acknowledged?
+
+  **Research Validation Process:**
+  1. **Critical Analysis:**
+     - Review research completeness against project requirements
+     - Identify knowledge gaps that could derail implementation
+     - Flag potential blind spots or biases in research approach
+     - Assess whether research depth matches project complexity
+
+  2. **Gap Identification:**
+     - Generate 2-3 specific follow-up research questions if gaps exist
+     - Prioritize gaps by potential impact on project success
+     - Identify domains requiring deeper investigation
+
+  3. **Quality Rating & Recommendation:**
+     - Provide overall research quality rating (1-10)
+     - Give specific improvement recommendations
+     - Determine if research is sufficient to proceed or needs continuation
+
+  **Output Format for Research Validation:**
+  - **Research Quality Rating:** [X/10] - [Brief justification]
+  - **Critical Gaps Identified:** [Specific areas needing more research]
+  - **Recommendation:** [Continue research/Proceed to documentation/Pivot approach]
+  - **Next Research Focus:** [2-3 specific questions/domains if continuing]
+  - **Decision Point:** "Research cycle complete. Quality rating: [X/10]. Gaps identified: [list]. Continue research or proceed to documentation?"
